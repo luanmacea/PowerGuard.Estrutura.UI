@@ -155,7 +155,6 @@ void EmitirAlerta()
     Usuario usuarioAlvo = BancoUtils.BuscarUsuarioPorNomeOuEmail(inputUsuario);
     alerta.UsuarioId = usuarioAlvo.Id;
 
-    // Exibe falhas registradas
     var falhas = new FalhaEnergiaRepository().ListarTodos().OrderBy(f => f.Id).ToList();
     Console.WriteLine("\nFalhas registradas disponíveis:");
     foreach (var f in falhas)
