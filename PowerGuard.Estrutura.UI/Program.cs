@@ -1,6 +1,7 @@
 ﻿using PowerGuard.Estrutura.Controller;
 using PowerGuard.Estrutura.Model;
 using PowerGuard.Estrutura.Repository;
+using PowerGuard.Estrutura.UI.Utils;
 
 Usuario? usuarioLogado = null;
 
@@ -150,23 +151,13 @@ void EmitirAlerta()
         throw new Exception("O campo 'Mensagem' é obrigatório.");
 
     Console.Write("Informe o email ou nome do usuário responsável: ");
-    string? inputUsuario = Console.ReadLine();
-
-    var usuarioRepo = new UsuarioRepository();
-    Usuario? usuarioAlvo = usuarioRepo.ListarTodos()
-        .FirstOrDefault(u =>
-            u.Email.Equals(inputUsuario, StringComparison.OrdinalIgnoreCase) ||
-            u.Nome.Equals(inputUsuario, StringComparison.OrdinalIgnoreCase));
-
-    if (usuarioAlvo == null)
-        throw new Exception("Usuário não encontrado. Verifique o nome/email e tente novamente.");
-
+    string inputUsuario = Console.ReadLine() ?? "";
+    Usuario usuarioAlvo = BancoUtils.BuscarUsuarioPorNomeOuEmail(inputUsuario);
     alerta.UsuarioId = usuarioAlvo.Id;
 
-    // 🔽 MOSTRA LISTA DE FALHAS EXISTENTES
+    // Exibe falhas registradas
+    var falhas = new FalhaEnergiaRepository().ListarTodos().OrderBy(f => f.Id).ToList();
     Console.WriteLine("\nFalhas registradas disponíveis:");
-    var falhaRepo = new FalhaEnergiaRepository();
-    var falhas = falhaRepo.ListarTodos();
     foreach (var f in falhas)
     {
         Console.WriteLine($"ID: {f.Id} | Local: {f.Localizacao} | Tipo: {f.TipoEvento} | Gravidade: {f.Gravidade}");
@@ -174,7 +165,14 @@ void EmitirAlerta()
 
     Console.Write("\nInforme o ID da falha associada (ou deixe vazio para ignorar): ");
     string? inputFalha = Console.ReadLine();
-    alerta.FalhaEnergiaId = string.IsNullOrWhiteSpace(inputFalha) ? null : int.Parse(inputFalha);
+    if (!string.IsNullOrWhiteSpace(inputFalha))
+    {
+        if (!int.TryParse(inputFalha, out int idFalha))
+            throw new Exception("ID de falha inválido.");
+
+        var falhaEncontrada = BancoUtils.BuscarFalhaPorId(idFalha);
+        alerta.FalhaEnergiaId = falhaEncontrada.Id;
+    }
 
     alerta.DataHora = DateTime.Now;
 
@@ -189,6 +187,8 @@ void EmitirAlerta()
         UsuarioId = usuarioLogado.Id
     });
 }
+
+
 
 
 
